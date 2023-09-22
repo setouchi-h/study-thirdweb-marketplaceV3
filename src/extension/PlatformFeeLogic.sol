@@ -6,13 +6,13 @@ import {IPlatformFee} from "../interface/IPlatformFee.sol";
 
 /**
  *  @author
- *  @title   PlatformFee
- *  @notice  Thirdweb's `PlatformFee` is a contract extension to be used with any base contract. It exposes functions for setting and reading
- *           the recipient of platform fee and the platform fee basis points, and lets the inheriting contract perform conditional logic
- *           that uses information about platform fees, if desired.
+ *  @title   PlatformFeeLogic
  */
 
 abstract contract PlatformFeeLogic is IPlatformFee {
+    error PlatformFeeLogic__NotAuthorized();
+    error PlatformFeeLogic__ExceedsMaxBps();
+
     /// @dev Returns the platform fee recipient and bps.
     function getPlatformFeeInfo() public view override returns (address, uint16) {
         PlatformFeeStorage.Data storage data = PlatformFeeStorage.platformFeeStorage();
@@ -30,7 +30,7 @@ abstract contract PlatformFeeLogic is IPlatformFee {
      */
     function setPlatformFeeInfo(address _platformFeeRecipient, uint256 _platformFeeBps) external override {
         if (!_canSetPlatformFeeInfo()) {
-            revert("Not authorized");
+            revert PlatformFeeLogic__NotAuthorized();
         }
         _setupPlatformFeeInfo(_platformFeeRecipient, _platformFeeBps);
     }
@@ -39,7 +39,7 @@ abstract contract PlatformFeeLogic is IPlatformFee {
     function _setupPlatformFeeInfo(address _platformFeeRecipient, uint256 _platformFeeBps) internal {
         PlatformFeeStorage.Data storage data = PlatformFeeStorage.platformFeeStorage();
         if (_platformFeeBps > 10_000) {
-            revert("Exceeds max bps");
+            revert PlatformFeeLogic__ExceedsMaxBps();
         }
 
         data.platformFeeBps = uint16(_platformFeeBps);
